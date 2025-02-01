@@ -15,3 +15,18 @@ if __name__ == "__main__":
     # Write data to file
     with open("dogs.json", "w") as f:
         json.dump(data, f)
+    # โค้ดส่วนนี้จะเป็นการเตรียมเรื่อง Credentials และ Configuration ต่าง ๆ เพื่อใช้ในการเชื่อมต่อกับ Dog API
+    api_url = "https://api.jsonbin.io/v3/b"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Master-Key": "$2a$10$QhyuXGuVERMaKlci1jQsMuNDORsRnUog52sfvfv6bkqxVvc/mcZZ2",
+        "X-Collection-Id": "678b626ee41b4d34e47a06d5",
+    }
+
+    # Read data from file
+    with open("dogs.json", "r") as f:
+        data = json.load(f)
+
+    # โค้ดส่วนนี้จะเป็นการยิง Request ไปเพื่ออัพโหลดข้อมูลไปยังเซิฟเวอร์ของ JSONBin
+    response = requests.post(api_url, json=data, headers=headers)
+    print(response.json())
