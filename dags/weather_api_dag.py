@@ -11,6 +11,7 @@ import requests
 
 
 def _get_weather_data():
+    # assert 1==2
     # API_KEY = os.environ.get("WEATHER_API_KEY")
     API_KEY = Variable.get("weather_api_key")
 
@@ -29,7 +30,12 @@ def _get_weather_data():
     with open("/opt/airflow/dags/data.json", "w") as f:
         json.dump(data, f)
 
+def _validate_data():
+    with open("/opt/airflow/dags/data.json", "r") as f:
+        data = json.load(f)
 
+    assert data.get("main") is not None  
+    
 def _create_weather_table():
     pg_hook = PostgresHook(
         postgres_conn_id="weather_postgres_conn",
@@ -65,9 +71,13 @@ def _load_data_to_postgres():
     """
     cursor.execute(sql)
     connection.commit()
-
+default_args = {
+    "email": ["lotuskup@gmail.com"],
+    "retries": 3,
+}
 with DAG(
     "weather_api_dag",
+    default_args=default_args,
     schedule="0 */3 * * *",
     start_date=timezone.datetime(2025, 2, 1),
     tags=["dpu"],
@@ -78,7 +88,11 @@ with DAG(
         task_id="get_weather_data",
         python_callable=_get_weather_data,
     )
-
+    validate_data = PythonOperator(
+        task_id="validate_data",
+        python_callable=_validate_data,
+    )
+   
     create_weather_table = PythonOperator(
         task_id="create_weather_table",
         python_callable=_create_weather_table,
@@ -90,4 +104,5 @@ with DAG(
 
     end = EmptyOperator(task_id="end")
 
-    start >> get_weather_data >> create_weather_table >> load_data_to_postgres >> end
+    start >> get_weather_data >>validate_data >> load_data_to_postgres >> end
+    start >> create_weather_table >> load_data_to_postgres
