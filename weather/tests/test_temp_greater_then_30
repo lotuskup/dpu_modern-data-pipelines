@@ -1,0 +1,4 @@
+select
+ temp 
+ from {{ ref("temp_greater_then_35") }}
+where temp < 30
